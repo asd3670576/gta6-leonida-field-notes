@@ -1,0 +1,155 @@
+﻿gta6rt.exe : [rt] loader: game_scarlett_master.exe: 53246 index-0 TLS reads (gs:[58h]) now read its own TLS (TlsSlots[2
+]); its module TLS index is 5
+所在位置 行:4 字符: 8
++   $o = & $exe --dry-run "$game\game_scarlett_master.exe" --game-dir $ ...
++        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([rt] loader: ga... TLS index is 5:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+game_scarlett_master.exe             base=0000000140000000 size=184995840 entry=+0x56a1ec8  shim=82 host=422 module=72 unimplemented=11
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!FreeLibrary
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!GetModuleHandleA
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!GetModuleHandleW
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!GetProcAddress
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!LoadLibraryExA
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!LoadLibraryExW
+    shim          api-ms-win-core-file-l1-1-0.dll!CreateDirectoryW
+    shim          api-ms-win-core-file-l1-1-0.dll!CreateFileW
+    shim          api-ms-win-core-file-l1-1-0.dll!DeleteFileW
+    shim          api-ms-win-core-file-l1-1-0.dll!FindClose
+    shim          api-ms-win-core-file-l1-1-0.dll!FindFirstFileW
+    shim          api-ms-win-core-file-l1-1-0.dll!FindNextFileW
+    shim          api-ms-win-core-file-l1-1-0.dll!GetFileAttributesA
+    shim          api-ms-win-core-file-l1-1-0.dll!GetFileAttributesExW
+    shim          api-ms-win-core-file-l1-1-0.dll!GetFileAttributesW
+    shim          api-ms-win-core-file-l1-1-0.dll!RemoveDirectoryW
+    shim          api-ms-win-core-file-l1-1-0.dll!SetFileAttributesW
+    shim          api-ms-win-core-processenvironment-l1-1-0.dll!GetCommandLineA
+    shim          xmem.dll!XMemAlloc
+    shim          xmem.dll!XMemAllocDefault
+    shim          xmem.dll!XMemAllocatePhysicalPages
+    shim          xmem.dll!XMemFree
+    shim          xmem.dll!XMemFreeDefault
+    shim          xmem.dll!XMemFreePhysicalPages
+    shim          xmem.dll!XMemGetWorkingSetStatistics
+    shim          xmem.dll!XMemIsToolsMemAvailable
+    shim          xmem.dll!XMemMapPhysicalPages
+    shim          xmem.dll!XMemMapPhysicalPagesScatter
+    shim          xmem.dll!XMemTransferMemory
+    shim          xmem.dll!XMemVirtualAlloc
+    shim          api-ms-win-core-memory-l1-1-0.dll!VirtualAlloc
+    shim          d3d12_xs.dll!D3D12ConfigureVirtualMemoryX
+    shim          d3d12_xs.dll!D3D12SerializeVersionedRootSignature
+    shim          d3d12_xs.dll!D3D12XboxCreateDevice
+    shim          api-ms-win-core-file-l2-1-0.dll!MoveFileExW
+    shim          api-ms-win-core-com-l1-1-0.dll!CoCreateGuid
+    shim          api-ms-win-core-com-l1-1-0.dll!CoCreateInstance
+    shim          api-ms-win-core-com-l1-1-0.dll!CoInitializeEx
+    shim          api-ms-win-core-com-l1-1-0.dll!CoTaskMemFree
+    shim          api-ms-win-core-com-l1-1-0.dll!CoUninitialize
+    shim          api-ms-win-core-com-l1-1-0.dll!PropVariantClear
+    shim          api-ms-win-core-com-l1-1-0.dll!StringFromGUID2
+    shim          WINHTTP.dll!WinHttpAddRequestHeaders
+    shim          WINHTTP.dll!WinHttpCloseHandle
+    shim          WINHTTP.dll!WinHttpConnect
+    shim          WINHTTP.dll!WinHttpCrackUrl
+    shim          WINHTTP.dll!WinHttpOpen
+    shim          WINHTTP.dll!WinHttpOpenRequest
+    shim          WINHTTP.dll!WinHttpQueryDataAvailable
+    shim          WINHTTP.dll!WinHttpQueryHeaders
+    shim          WINHTTP.dll!WinHttpReadData
+    shim          WINHTTP.dll!WinHttpReceiveResponse
+    shim          WINHTTP.dll!WinHttpSendRequest
+    shim          WINHTTP.dll!WinHttpSetOption
+    shim          WINHTTP.dll!WinHttpSetStatusCallback
+    shim          WINHTTP.dll!WinHttpSetTimeouts
+    shim          WINHTTP.dll!WinHttpWriteData
+    shim          api-ms-win-core-libraryloader-l1-2-1.dll!LoadLibraryW
+    UNIMPLEMENTED chad.dll!XDspActivate
+    UNIMPLEMENTED chad.dll!XDspConnectWithMaximumStreamLimit
+    UNIMPLEMENTED chad.dll!XDspDeactivate
+    UNIMPLEMENTED chad.dll!XDspDisconnect
+    UNIMPLEMENTED chad.dll!XDspSubmitCommand
+    shim          xg_xs.dll!XGCreateTextureComputer
+    shim          xg_xs.dll!XGSuggestSwizzleMode
+    UNIMPLEMENTED XCRDAPI.dll!DStorageGetFactory
+    UNIMPLEMENTED xapu.dll!XApuConnect
+    UNIMPLEMENTED xapu.dll!XApuDequeueResult
+    UNIMPLEMENTED xapu.dll!XApuDisconnect
+    UNIMPLEMENTED xapu.dll!XApuEnqueueCommand
+    UNIMPLEMENTED xapu.dll!XApuGetResultCount
+    shim          AcpHal.dll!AcpHalAllocateShapeContexts
+    shim          AcpHal.dll!AcpHalCreate
+    shim          AcpHal.dll!AcpHalReleaseShapeContexts
+    shim          AcpHal.dll!ApuAlloc
+    shim          AcpHal.dll!ApuCreateHeap
+    shim          AcpHal.dll!ApuFree
+    shim          AcpHal.dll!ApuIsVirtualAddressValid
+    shim          AcpHal.dll!ApuMapApuAddress
+    shim          AcpHal.dll!ApuMapVirtualAddress
+    shim          bcrypt.dll!BCryptCloseAlgorithmProvider
+    shim          bcrypt.dll!BCryptGenRandom
+    shim          bcrypt.dll!BCryptOpenAlgorithmProvider
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!__p___argc
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!__p___argv
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_c_exit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_cexit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_configure_narrow_argv
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_crt_atexit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_exit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_get_narrow_winmain_command_line
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!abort
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!exit
+XboxBvhBuilder.dll                   base=0000000180000000 size=909312 entry=+0x227cc  shim=5 host=52 module=0 unimplemented=0
+    shim          d3d12_xs.dll!D3D12SerializeVersionedRootSignature
+    shim          xmem.dll!XMemVirtualQuery
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_configure_narrow_argv
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_cexit
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!DisableThreadLibraryCalls
+amd_fidelityfx_loader_xbox.dll       base=00000211676B0000 (relocated) size=32768 entry=+0x18d0  shim=6 host=16 module=0 unimplemented=0
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!GetProcAddress
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!DisableThreadLibraryCalls
+    shim          api-ms-win-core-libraryloader-l1-2-0.dll!GetModuleHandleA
+    shim          api-ms-win-core-libraryloader-l1-2-1.dll!LoadLibraryA
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_cexit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_configure_narrow_argv
+libHttpClient.GDK.dll                base=00000211676C0000 (relocated) size=999424 entry=+0x11f0  shim=28 host=170 module=0 unimplemented=0
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_crt_atexit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_cexit
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_configure_narrow_argv
+    shim          KERNEL32.dll!CreateFileA
+    shim          KERNEL32.dll!CreateFileW
+    shim          KERNEL32.dll!GetProcAddress
+    shim          KERNEL32.dll!DisableThreadLibraryCalls
+    shim          KERNEL32.dll!LoadLibraryExW
+    shim          KERNEL32.dll!LoadLibraryExA
+    shim          KERNEL32.dll!FreeLibrary
+    shim          KERNEL32.dll!GetFileAttributesW
+    shim          KERNEL32.dll!GetModuleHandleW
+    shim          KERNEL32.dll!LoadLibraryW
+    shim          WINHTTP.dll!WinHttpConnect
+    shim          WINHTTP.dll!WinHttpSendRequest
+    shim          WINHTTP.dll!WinHttpReadData
+    shim          WINHTTP.dll!WinHttpCloseHandle
+    shim          WINHTTP.dll!WinHttpWriteData
+    shim          WINHTTP.dll!WinHttpQueryDataAvailable
+    shim          WINHTTP.dll!WinHttpQueryOption
+    shim          WINHTTP.dll!WinHttpReceiveResponse
+    shim          WINHTTP.dll!WinHttpSetOption
+    shim          WINHTTP.dll!WinHttpAddRequestHeaders
+    shim          WINHTTP.dll!WinHttpOpen
+    shim          WINHTTP.dll!WinHttpSetTimeouts
+    shim          WINHTTP.dll!WinHttpQueryHeaders
+    shim          WINHTTP.dll!WinHttpOpenRequest
+    shim          WINHTTP.dll!WinHttpSetStatusCallback
+Bink2Scarlett.dll                    base=00000211679E0000 (relocated) size=278528 entry=+0x2ac1c  shim=8 host=52 module=0 unimplemented=0
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_configure_narrow_argv
+    shim          api-ms-win-crt-runtime-l1-1-0.dll!_cexit
+    shim          xmem.dll!XMemFree
+    shim          xmem.dll!XMemAlloc
+    shim          api-ms-win-core-file-l1-2-0.dll!CreateFile2
+    shim          api-ms-win-core-com-l1-1-0.dll!CoTaskMemFree
+    shim          api-ms-win-core-com-l1-1-0.dll!PropVariantClear
+    shim          api-ms-win-core-com-l1-1-0.dll!CoCreateInstance
+5 module(s) mapped, 11 unimplemented import(s)
+unimplemented by return policy: hresult=0 other=11

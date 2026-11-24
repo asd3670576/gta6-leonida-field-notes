@@ -1,0 +1,7 @@
+﻿gta6rt.exe : error: XboxBvhBuilder.dll: only one manually mapped module may use static TLS at a time
+所在位置 行:4 字符: 8
++   $o = & $exe --dry-run "$game\game_scarlett_master.exe" --game-dir $ ...
++        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (error: XboxBvhB...c TLS at a time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

@@ -61,6 +61,17 @@ our own logs.
    through Vulkan and `nvidia-smi`. A spec checker that trusts WMI
    under-reports every >4 GB card.
 
+7. **What actually stands between this package and a first frame** (measured,
+   not guessed): `gta6rt --dry-run` over the executable that our package ships
+   maps all five modules and reports **11 unimplemented imports**, all of them
+   audio (`chad.dll` ×5, `xapu.dll` ×5) or DirectStorage (`XCRDAPI.dll` ×1) —
+   the graphics, file-system and memory paths bind completely. The project's own
+   doc still says 30 and still says the executable is not in the package; see
+   [`findings/0004`](findings/0004-retail-dry-run-11-unimplemented.md). A
+   runtime artifact one day older (`4eb6155d`) does not map anything at all:
+   `error: XboxBvhBuilder.dll: only one manually mapped module may use static
+   TLS at a time`.
+
 ## Machine
 
 | | |
@@ -87,7 +98,7 @@ are in [`scripts/`](scripts) (their path constants are this machine's defaults).
 
 | # | Finding | Where |
 | --- | --- | --- |
-| 1 | An incomplete copy is reported as "unsupported"; the per-file report is never reached because the 3 probes fail first | `make_game.py` `PROBES` / `probe_mismatches()` / `load_version()`; `find_dumps()` also skips a folder without `MicrosoftGame.Config`, so `--find` lists nothing |
+| 1 | an incomplete copy is reported as "unsupported"; the per-file report is never reached because the 3 probes are absent — **still unfixed at `ff8ce388`** | `make_game.py:318` `PROBES`, `:324`, `:348-361` (`load_version`), `:508` (discovery needs `MicrosoftGame.Config`, so `--find` lists nothing) |
 | 2 | with 16 jobs and a ~2.7 GB cache all four pipeline-cache snapshot attempts return `VK_INCOMPLETE`, so a periodic save is lost (already fixed upstream by PR #9722) | `runtime/test/pipeline_cache_snapshot.h`, `vk_pipeline_check.cpp:935/943` at `4eb6155d` |
 | 3 | WMI `AdapterRAM` is capped at 4 GiB; a 20 GB card reads as `0xFFF00000` | `pc_checker.py` GPU sizing (PR #5112 was open when the repo went 404) |
 | 4 | wave64 graphics tier C = 8,245 of 26,503 modules is approximate on 32-wide subgroups | `tools/rdna2spirv.py`, `wave64_graphics_reasons` in the index |
@@ -99,11 +110,31 @@ The diagnostic is pure Python and testable with synthetic manifests.
 
 ## Status of the boot attempt
 
-The runtime is used here as the project's own CI artifact
-(`runtime-windows`), because this machine has no C++ toolchain that can be
-installed without administrator rights. The corpus pipeline cache built by
-`vk_pipeline_check` is the warm cache that avoids the first-entry compile
-stutter reported for the prologue.
+The runtime is used here as the project's own CI artifact (`runtime-windows`),
+because this machine has no C++ toolchain that can be installed without
+administrator rights. Artifacts age: `4eb6155d` cannot map the package at all,
+`2e471574` maps it with 11 unimplemented imports, and `ff8ce388` additionally
+carries `f35d19cb` (the retail executable imports `SetThreadGroupAffinity`).
+
+Sequence we are running, in this order:
+
+1. `--dry-run` over `game_scarlett_master.exe` — done, see
+   [`findings/0004`](findings/0004-retail-dry-run-11-unimplemented.md).
+2. `--init` with `--trace` — expected to exit 0; the doc's run showed the four
+   package DLLs' `DllMain` and the executable's two TLS callbacks all running
+   cleanly.
+3. `--run` with the full 26,503-module SPIR-V corpus and the **warm** pipeline
+   cache built by `vk_pipeline_check` over the whole corpus. The cache matters:
+   a cold cache compiles thousands of pipelines on first entry to the prologue,
+   which is what makes that stretch stutter even where it runs.
+
+Known ceiling from other reports: with diagnostics + DRED enabled the prologue
+reaches roughly 0.2-2 FPS, and world shaders that use features the translator
+rejects (`v_swap_b32`, 64-bit image atomics, untracked lane masks, unknown
+stride buffers) have their draw or dispatch dropped rather than mis-rendered.
+Our own corpus numbers for the neighbouring risk - wave64 graphics tier C,
+8,245 of 26,503 modules approximate on 32-wide subgroups - are in
+[`data/results_summary.json`](data/results_summary.json).
 
 ## License
 
