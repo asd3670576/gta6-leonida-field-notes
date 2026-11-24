@@ -122,26 +122,43 @@ point #542's author made about `title_memory_mb` not helping.
 
 ## The console's 16 GiB GPU pool, mapped onto a PC's VRAM
 
-The sizing is worth spelling out because it is where "显存溢出" comes from on a card smaller
-than an Xbox Series X:
+The sizing is worth spelling out because it is where "runs out of memory" comes from on a card
+smaller than an Xbox Series X — with one caveat about what XCL's own log lines mean.
 
 - `config.rs:111`: with `uma_mb = 0` — which is what XCL wrote into our `xcl.toml` — an
   **`advanced` title-memory game gets `uma_mb = 4095`**, and `config.rs:27-28` says anything
   above 4095 is split into 4 GiB windows (`gpu::uma`).
 - Our log line is the layout: `UMA: 3 sparse VRAM window(s) (12 GiB VA) + 512 MB coherent
-  window at 0x400000000`, i.e. **3 × 4 GiB of sparse VRAM windows plus one coherent window that
-  grows towards 4095 MB** (it climbed 1172 → 3371 → 3934 → 4530 MB across one run, and the
-  learned target is stored in `cache/uma_coherent.txt` for the next run). 12 + 4 = **16 GiB**,
-  the Series X's unified pool — with no relation to how much video memory the PC has.
-- So on our 20 GB card, XCL's own accounting (`coherent … , sparse 7431 MB`) plus the driver's
-  DXCache is enough to fill it, *with the shader recompiler switched off entirely*. The
-  `20091/20480 MiB` sample was taken while another GPU program was running and should not be
-  read as an exact XCL figure, but the 16 GiB sizing above is from the code and the run's own
-  lines, and it is the mechanism.
-- The lever exists but is undocumented for this case: `uma_mb` in the title's `xcl.toml`
-  (values above 4095 are split into windows; `0` means "ask for the device's standard budget").
-  Lowering it is the small-VRAM fix upstream's #345 reporter needed on their 6 GB card, and an
-  automatic cap at the adapter's dedicated memory would be the friendlier version of it.
+  window at 0x400000000` — 3 × 4 GiB of sparse windows plus a coherent window that grows towards
+  4095 MB (it climbed 1172 → 3371 → 3934 → 4530 MB within one run). **12 + 4 = 16 GiB, the
+  Series X's unified pool, chosen from the title's memory class and not from the adapter.**
+- **Do not read `sparse 7431 MB` as 7.4 GB of anything physical**: it is reserved *address space*
+  (`gpu/uma.rs:370-373`). What is really committed per sparse page is host RAM
+  (`kernelx.rs:227-233`) **plus** a 64 KiB video-memory tile handed out of 64 MiB pool heaps
+  (`d3d12x/sparse.rs:35-36, 571-599`) — our run had 12 731 tiles mapped, ≈796 MiB of VRAM
+  duplicated on top of ≈796 MiB of host RAM.
+- The `20091/20480 MiB` VRAM sample and the `2937 MiB free RAM` sample were taken while another
+  GPU program (STRATA) was running, so they are not XCL's footprint; with the sparse path
+  duplicating each page and the coherent window pinned high (below), 20 GB is still the
+  tightest constraint on this machine, and `d3d12x/vram.rs:303` never returns its `Pages` pool
+  heaps, so whatever peak the run reaches stays allocated.
+- Two levers, one of which does **not** do what it looks like it does:
+  - `uma_mb` alone does not shrink the coherent window once XCL has learned one: with
+    `cache/uma_coherent.txt` holding 4 770 168 832 (4549 MiB, from our run),
+    `gpu/uma.rs:170, 739` computes `size.min(coherent.max(512 MiB))` = 4095 MiB committed
+    regardless of `uma_mb`. Pin it with **`XCL_COHERENT_MB`** (`gpu/uma.rs:679-681`) or delete
+    the cache file. The adaptive value is written only when it grows
+    (`uma.rs:711-724`) and is gated on 17 GiB of free **commit**, not free RAM (`uma.rs:687-699`).
+  - **`title_memory_mb`** in the title's `xcl.toml` is the lever that shrinks both sides: XCL
+    reports it as the title's memory budget (`config.rs:117-123`, `kernelx.rs:753`) and the
+    engine sizes its own streaming pools from it.
+  - `XCL_VRAM_ARENAS=1` switches off the tiled path (`vram.rs:647, 662`) and allocates whole
+    placement ranges as arenas instead; upstream's own history with it is 15 GB of arenas in 2 s
+    and a device removal (`vram.rs:14-24`, `HANDOFF.md:1791-1793`). Our run made 31 MB of arenas,
+    so on a 20 GB card leave it off.
+
+Full pool-by-pool reading, with file:line for every claim:
+[`0012-xcl-memory-model.md`](0012-xcl-memory-model.md).
 
 ## What we did not claim
 

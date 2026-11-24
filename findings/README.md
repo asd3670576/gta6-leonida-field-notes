@@ -18,6 +18,7 @@ so they are kept here.
 | [`0009-xcl-run-here-and-memory-patches.md`](0009-xcl-run-here-and-memory-patches.md) | XCL runs our package end to end; why Shader Model 6.6 is unreachable on 19045.3324 (measured, not inferred), and two memory patches (upstream #467, #542) built and unit-tested here |
 | [`0010-xcl-approach-and-oom.md`](0010-xcl-approach-and-oom.md) | a reading of XCL's design and of the twelve separate memory-exhaustion mechanisms behind its "runs out of memory" reports, with what a 64 GB / 20 GB machine changes |
 | [`0011-the-boot-stop-is-gameinputcreate.md`](0011-the-boot-stop-is-gameinputcreate.md) | the guest's `call; test eax,eax; js -> int3` is on `GameInput.dll!ordinal 1` (`GameInputCreate`): the SDL3 GameInput shim was not built, so the host's GameInput.dll answered FAILED, and the null read is the unwritten out-parameter |
+| [`0012-xcl-memory-model.md`](0012-xcl-memory-model.md) | pool by pool, where XCL's memory actually goes: sparse pages cost host RAM *and* a VRAM tile each, `sparse 7431 MB` is address space not bytes, a learned `cache/uma_coherent.txt` overrides `uma_mb`, and `vram::Pages` pool heaps are never returned |
 
 ## A note on the artifacts in `../port`
 
