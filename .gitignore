@@ -1,0 +1,5 @@
+# nothing generated here belongs in the repo
+__pycache__/
+*.pyc
+*.log
+token.txt

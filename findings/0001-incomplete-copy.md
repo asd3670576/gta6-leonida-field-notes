@@ -1,0 +1,6 @@
+finding: an incomplete 1.0.2.1 copy is reported only as "This doesn't look like a supported version of the game", never as a partial match.
+Where: `make_game.py:317` (`PROBES`), `probe_mismatches()` 320-343, `load_version()` 351-361 — the per-file loop at 1001-1022 is never reached. `find_dumps` (507) also skips a folder without `MicrosoftGame.Config`, so `--find` reports no copy at all.
+Why it matters: a copy that holds 68 of the 108 `game/xbox-1.0.2.1.json` entries, every present one matching its manifest size exactly (0 size mismatches), is rejected because the 3 probe files are absent. The message names only those 3 probes, so a reader cannot tell "wrong game" from "download stopped early". Here the 40 absent entries total 33,390,534 bytes (largest 6,642,192), and 16 of them are the package DLLs the runtime maps.
+Suggest: when no version matches but at least half the manifest entries match by name and size, print "N of M manifest files present with matching sizes" plus the missing names, and say the copy looks incomplete rather than unsupported.
+Needs: a game copy to reproduce; the diagnostic itself is pure Python and testable with synthetic manifests, the way #339's tests do. No game data attached — only names and byte counts already in `game/xbox-1.0.2.1.json`.
+Measured here: Windows 10 19045 x64, Python 3.12.16, `make_game.py` at `e0816d6af`.

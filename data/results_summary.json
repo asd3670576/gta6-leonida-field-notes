@@ -1,0 +1,304 @@
+{
+  "carve": {
+    "shaders": 26503,
+    "rejected": 1,
+    "stages": {
+      "vs": 2236,
+      "ms": 9282,
+      "ps": 12101,
+      "gs": 195,
+      "cs": 2689
+    },
+    "shader_models": {
+      "6.6": 26503
+    }
+  },
+  "fssm_unpack": {
+    "blobs": 26503,
+    "problems": "{}",
+    "sizes": "size min 578, median 10479, max 493467, total 412 MiB\r\n"
+  },
+  "disasm": {
+    "last_lines": [
+      "26503 shaders -> H:\\leonida\\work\\shaders\\dxbc\\disasm: {'clean': 26503}"
+    ]
+  },
+  "translate": {
+    "shards": 16,
+    "translated": 26503,
+    "spirv_val_ok": 26503,
+    "wave64_graphics_tiers": {
+      "A": 5059,
+      "B": 101,
+      "C": 8245
+    },
+    "per_shard": [
+      {
+        "shard": "shard0",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard1",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard10",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard11",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard12",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard13",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard14",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard15",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard2",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard3",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard4",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard5",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard6",
+        "total": 1657,
+        "translated": 1657,
+        "spirv_val_ok": 1657
+      },
+      {
+        "shard": "shard7",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard8",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      },
+      {
+        "shard": "shard9",
+        "total": 1656,
+        "translated": 1656,
+        "spirv_val_ok": 1656
+      }
+    ],
+    "merged_entries": 26503
+  },
+  "pipeline_slice": {
+    "shaders_in_index": 26503,
+    "per_stage": {
+      "cs": {
+        "modules_ok": 2,
+        "modules_failed": 0,
+        "pipelines_ok": 2,
+        "pipelines_failed": 0,
+        "pipelines_skipped": 0,
+        "wave32_ok": 2,
+        "wave32_failed": 0,
+        "wave64_ok": 0,
+        "wave64_failed": 0,
+        "wave64_no_required_subgroup": 0,
+        "compile_total_s": 0.11,
+        "compile_mean_s": 0.053,
+        "slowest": "!im_CS_DepthCopy_9c3b492b_Wrapped",
+        "slowest_s": 0.08
+      },
+      "ms": {
+        "modules_ok": 658,
+        "modules_failed": 0,
+        "pipelines_ok": 658,
+        "pipelines_failed": 0,
+        "pipelines_skipped": 0,
+        "wave32_ok": 658,
+        "wave32_failed": 0,
+        "wave64_ok": 0,
+        "wave64_failed": 0,
+        "wave64_no_required_subgroup": 0,
+        "compile_total_s": 1061.98,
+        "compile_mean_s": 1.614,
+        "slowest": "!MS_VS_Transform_e74ae427_Wrapped~2",
+        "slowest_s": 41.34
+      },
+      "ps": {
+        "modules_ok": 819,
+        "modules_failed": 0,
+        "pipelines_ok": 819,
+        "pipelines_failed": 0,
+        "pipelines_skipped": 0,
+        "wave32_ok": 299,
+        "wave32_failed": 0,
+        "wave64_ok": 520,
+        "wave64_failed": 0,
+        "wave64_no_required_subgroup": 520,
+        "compile_total_s": 3689.39,
+        "compile_mean_s": 4.505,
+        "slowest": "!PS_PuddleDetect_cf03bbb3_Wrapped~15",
+        "slowest_s": 45.64
+      },
+      "vs": {
+        "modules_ok": 21,
+        "modules_failed": 0,
+        "pipelines_ok": 21,
+        "pipelines_failed": 0,
+        "pipelines_skipped": 0,
+        "wave32_ok": 0,
+        "wave32_failed": 0,
+        "wave64_ok": 21,
+        "wave64_failed": 0,
+        "wave64_no_required_subgroup": 21,
+        "compile_total_s": 2.26,
+        "compile_mean_s": 0.107,
+        "slowest": "!VS_OctaWindFire_e6901d4b_Wrapped",
+        "slowest_s": 1.84
+      }
+    },
+    "wall_time": "wall time: 599.9s on 8 threads\r\npipeline cache: 262215635 bytes -> H:\\leonida\\out\\pipeline_cache_slice.bin\r\n",
+    "cache_line": "pipeline cache: 262215635 bytes -> H:\\leonida\\out\\pipeline_cache_slice.bin\r\n",
+    "progress_lines": [
+      {
+        "pipelines": 250,
+        "elapsed_s": 70
+      },
+      {
+        "pipelines": 500,
+        "elapsed_s": 138
+      },
+      {
+        "pipelines": 750,
+        "elapsed_s": 200
+      },
+      {
+        "pipelines": 1000,
+        "elapsed_s": 240
+      },
+      {
+        "pipelines": 1250,
+        "elapsed_s": 318
+      },
+      {
+        "pipelines": 1500,
+        "elapsed_s": 600
+      }
+    ],
+    "still_compiling_warnings": 0,
+    "cache_save_failures": 0,
+    "cache_save_error": null,
+    "slow_lines": [
+      "SLOW MS !MS_VS_Transform_8a49baee_Wrapped~9 (w0, 39.9s)",
+      "SLOW MS !MS_VS_Transform_e74ae427_Wrapped~2 (w0, 41.3s)",
+      "SLOW PS !PS_PuddleDetect_cf03bbb3_Wrapped~15 (w64, 45.6s)"
+    ]
+  },
+  "pipeline_full": {
+    "shaders_in_index": 26503,
+    "per_stage": {},
+    "wall_time": null,
+    "cache_line": null,
+    "progress_lines": [
+      {
+        "pipelines": 18250,
+        "elapsed_s": 18092
+      },
+      {
+        "pipelines": 18500,
+        "elapsed_s": 18166
+      },
+      {
+        "pipelines": 18750,
+        "elapsed_s": 19213
+      },
+      {
+        "pipelines": 19000,
+        "elapsed_s": 19664
+      },
+      {
+        "pipelines": 19250,
+        "elapsed_s": 24085
+      },
+      {
+        "pipelines": 19500,
+        "elapsed_s": 26176
+      }
+    ],
+    "still_compiling_warnings": 592,
+    "cache_save_failures": 1,
+    "cache_save_error": "vkGetPipelineCacheData",
+    "slow_lines": [
+      "SLOW MS !MS_VS_Transform_8a49baee_Wrapped~8 (w0, 34.5s)",
+      "SLOW MS !MS_VS_Transform_8a49baee_Wrapped~6 (w0, 35.6s)",
+      "SLOW MS !MS_VS_Transform_e74ae427_Wrapped~1 (w0, 33.3s)",
+      "SLOW MS !MS_VS_Transform_e74ae427_Wrapped (w0, 34.2s)",
+      "SLOW MS !MS_VS_Transform_8a49baee_Wrapped~9 (w0, 57.5s)",
+      "SLOW MS !MS_VS_Transform_eb34a03f_Wrapped~221 (w0, 32.1s)",
+      "SLOW MS !MS_VS_Transform_e74ae427_Wrapped~2 (w0, 60.1s)",
+      "SLOW PS !PS_PuddleDetect_cf03bbb3_Wrapped~15 (w64, 64.8s)",
+      "SLOW MS %MS_VS_TransformFire_e74ae427_Wrapped~13 (w0, 33.3s)",
+      "SLOW MS %MS_VS_TransformFire_e74ae427_Wrapped~3 (w0, 35.0s)",
+      "SLOW MS %MS_VS_TransformSkin_046a2d06_Wrapped (w0, 34.3s)",
+      "SLOW MS %MS_VS_TransformSkin_2abd5519_Wrapped (w0, 36.3s)"
+    ],
+    "modules_in_stats": 19527,
+    "stats_bytes": 8885588
+  },
+  "package": {
+    "manifest_entries": 108,
+    "present_ok_size": 68,
+    "size_mismatch": null,
+    "absent": 40,
+    "verified": 40,
+    "verified_bytes": 33390534,
+    "installed": 40,
+    "check_output": [
+      "08:38:00  check: Xbox Series package 1.0.2.1, 108 files",
+      "08:38:00  check: all files present. Executable found."
+    ]
+  }
+}
