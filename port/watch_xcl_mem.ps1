@@ -111,6 +111,9 @@ if ($rep) {
         if ($prop.Name -match 'memory|uma|vram|crash|exit|title|presents|frames|shader|pipeline|dxc') {
             $v = $prop.Value
             if ($v -is [System.Object]) { $v = ($v | ConvertTo-Json -Compress -Depth 3) }
+        # report.json's "shaders" block carries the whole RDNA2 mnemonic histogram; keep the
+        # console output small and read the JSON file itself for detail.
+        if ($v.Length -gt 300) { $v = $v.Substring(0, 300) + ' …' }
             Write-Output ("  " + $prop.Name + " = " + $v)
         }
     }

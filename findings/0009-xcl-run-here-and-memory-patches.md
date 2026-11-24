@@ -160,6 +160,25 @@ smaller than an Xbox Series X — with one caveat about what XCL's own log lines
 Full pool-by-pool reading, with file:line for every claim:
 [`0012-xcl-memory-model.md`](0012-xcl-memory-model.md).
 
+### Verified: `XCL_COHERENT_MB` is the lever, and memory is not what stops our run
+
+A second run with `XCL_COHERENT_MB=512;XCL_ACTIVITY=1` (the learned
+`cache/uma_coherent.txt` of 4549 MiB would otherwise have forced a 4095 MiB coherent window):
+
+- XCL's own accounting stayed at **`coherent 83/512 MB, sparse 7431 MB, 83 blocks`** — the pin
+  works, exactly as `gpu/uma.rs:679-681` says, and the 4 GiB coherent commitment is gone.
+- The run still ended at the same place: `unhandled exception 0xc0000005 in
+  game_scarlett_master.exe+0xb5a5f8 (read at address 0x68)`, same frames.
+- Its `report.json` says why the GPU side is inert while this machine is on 19045.3324:
+  `"recomp_programs": 0, "recomp_dxc_ok": 0` against `unique 1274, submitted 3542` shaders and
+  748 551 RDNA2 instructions decoded — the recompiler saw the title's GPU code and did not
+  recompile a single program.
+
+So on this machine memory pressure is **not** the limiter: with the coherent window cut from
+4095 to 512 MB the title dies in the same instruction. The limiter is the missing Shader Model
+6.6. The two-sided cost of the sparse/coherent design (0012) is what will bite once shaders do
+run, and it is what upstream's #345/#505 reporters met on smaller cards and smaller commit.
+
 ## What we did not claim
 
 * We did not reproduce any of XCL's OOM reports; our run stops earlier, for a different reason
