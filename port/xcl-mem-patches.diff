@@ -1,0 +1,179 @@
+diff --git a/crates/xcl/src/eh.rs b/crates/xcl/src/eh.rs
+index 2d431e5..2f45a4e 100644
+--- a/crates/xcl/src/eh.rs
++++ b/crates/xcl/src/eh.rs
+@@ -104,9 +104,12 @@ unsafe extern "system" fn unhandled_filter(info: *const EXCEPTION_POINTERS) -> i
+             regs.iter().map(|(n, v)| format!(" {n}={v:#x}{}", obj(*v))).collect::<String>() + &if callers.is_empty() { String::new() } else { format!("; on the stack: {callers}") }
+         };
+         let msg = format!(
+-            "unhandled exception {:#010x} in {}{extra}{regs}",
++            "unhandled exception {:#010x} in {}{extra}{regs}{}",
+             rec.ExceptionCode as u32,
+-            modules::describe_address(addr)
++            modules::describe_address(addr),
++            // a 0xc0000005 on a page that only failed to commit is out of memory, not a wild
++            // pointer: say so, from the counters `kernelx::lazy` keeps.
++            crate::hle::kernelx::lazy::failure_note()
+         );
+         crate::xlog_error!("{msg}");
+         crate::report::write_final(Some(msg));
+diff --git a/crates/xcl/src/gpu/recomp/dxc.rs b/crates/xcl/src/gpu/recomp/dxc.rs
+index b769d80..2e6d285 100644
+--- a/crates/xcl/src/gpu/recomp/dxc.rs
++++ b/crates/xcl/src/gpu/recomp/dxc.rs
+@@ -378,14 +378,46 @@ struct Job {
+ /// to be 6, which left most of a 16-thread CPU idle while a title with ~24 000 shaders
+ /// compiled for half an hour. (Normal priority: a title thread can wait for a pipeline –
+ /// `resolve_wait`, a compute pipeline's first bind – and must not wait behind its own threads.)
++///
++/// The default is also capped by the commit free when XCL starts (#542): on a 32-thread CPU
++/// with 32 GB, `cores - 1` = 31 workers of up to 0.7 GB each was how the first cold-cache wave
++/// took Windows to 1.6 GB free in three minutes, with the machine unresponsive before the
++/// gate could throttle anything. A wave that fits the memory the machine has left beats one
++/// the gate has to hold back afterwards.
+ pub fn compile_threads() -> usize {
+     static N: OnceLock<usize> = OnceLock::new();
+     *N.get_or_init(|| {
+         let cores = std::thread::available_parallelism().map_or(4, |n| n.get());
+-        std::env::var("XCL_DXC_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or(cores.saturating_sub(1)).clamp(1, 64)
++        if let Some(n) = std::env::var("XCL_DXC_THREADS").ok().and_then(|v| v.parse::<usize>().ok()) {
++            return n.clamp(1, 64);
++        }
++        let want = cores.saturating_sub(1);
++        let by_mem = match avail_commit_gb() {
++            0 => usize::MAX,  // no answer from the OS: do not limit by memory
++            gb => gb as usize,
++        };
++        let n = want.min(by_mem).clamp(1, 64);
++        if n < want {
++            crate::xlog_info!(
++                "DXC: {n} compile threads, not {want}: {} GB of commit free at startup, ~0.7 GB per big translation (#542)",
++                avail_commit_gb()
++            );
++        }
++        n
+     })
+ }
+ 
++/// GB of commit available right now (free RAM plus the page file's room), 0 if the query fails.
++fn avail_commit_gb() -> u64 {
++    use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
++    let mut m: MEMORYSTATUSEX = unsafe { std::mem::zeroed() };
++    m.dwLength = std::mem::size_of::<MEMORYSTATUSEX>() as u32;
++    if unsafe { GlobalMemoryStatusEx(&mut m) } == 0 {
++        return 0;
++    }
++    m.ullAvailPageFile >> 30
++}
++
+ /// GB of commit `wait_for_memory` keeps free besides the compiles: 6 for a running title (its
+ /// own allocations), less without one (`set_memory_reserve`: `xcl shaders --precompile`).
+ static RESERVE_GB: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(6);
+diff --git a/crates/xcl/src/hle/kernelx/lazy.rs b/crates/xcl/src/hle/kernelx/lazy.rs
+index fa750b9..2ef7fdc 100644
+--- a/crates/xcl/src/hle/kernelx/lazy.rs
++++ b/crates/xcl/src/hle/kernelx/lazy.rs
+@@ -12,9 +12,11 @@
+ 
+ use std::collections::BTreeSet;
+ use std::ffi::c_void;
++use std::sync::atomic::{AtomicU32, AtomicU64, AtomicUsize, Ordering};
+ use std::sync::{Once, RwLock};
+ 
+ use windows_sys::Win32::Foundation::{EXCEPTION_ACCESS_VIOLATION, NTSTATUS};
++use windows_sys::Win32::Foundation::GetLastError;
+ use windows_sys::Win32::System::Diagnostics::Debug::{AddVectoredExceptionHandler, EXCEPTION_POINTERS};
+ use windows_sys::Win32::System::Memory::{
+     VirtualAlloc, VirtualQuery, MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE,
+@@ -28,20 +30,51 @@ const EXCEPTION_CONTINUE_SEARCH: i32 = 0;
+ /// pages (64 KiB) mapped but not committed yet
+ static LAZY: RwLock<BTreeSet<usize>> = RwLock::new(BTreeSet::new());
+ 
+-fn install() {
+-    static ONCE: Once = Once::new();
+-    ONCE.call_once(|| unsafe {
+-        AddVectoredExceptionHandler(1, Some(handler));
+-    });
+-}
++/// Lazy commits that have failed: how many, the last page, and its Win32 error. A failed
++/// commit used to drop the page from `LAZY` before trying, so the page was never retried and
++/// the title died on a later access with a bare 0xc0000005 – a crash line that reads like a
++/// wild write and is really out of commit (#333, #467).
++static FAILED: AtomicU64 = AtomicU64::new(0);
++static LAST_PAGE: AtomicUsize = AtomicUsize::new(0);
++static LAST_ERROR: AtomicU32 = AtomicU32::new(0);
+ 
+-/// Commit `page` if it is a lazy one (true: it was).
++/// Commit `page` if it is a lazy one (true: it was). The page leaves `LAZY` only once the
++/// commit succeeded, so a failure is retried by the next access instead of being lost.
+ unsafe fn commit(page: usize) -> bool {
+     let mut g = LAZY.write().unwrap_or_else(|e| e.into_inner());
+-    if !g.remove(&page) {
++    if !g.contains(&page) {
+         return false;
+     }
+-    !VirtualAlloc(page as *const c_void, PAGE, MEM_COMMIT, PAGE_READWRITE).is_null()
++    if VirtualAlloc(page as *const c_void, PAGE, MEM_COMMIT, PAGE_READWRITE).is_null() {
++        let err = GetLastError();
++        FAILED.fetch_add(1, Ordering::Relaxed);
++        LAST_PAGE.store(page, Ordering::Relaxed);
++        LAST_ERROR.store(err, Ordering::Relaxed);
++        return false;
++    }
++    g.remove(&page);
++    true
++}
++
++/// For the crash line: one clause naming the failed lazy commits, empty when there were none.
++/// No allocation and no lock on the normal path.
++pub fn failure_note() -> String {
++    let n = FAILED.load(Ordering::Relaxed);
++    if n == 0 {
++        return String::new();
++    }
++    let page = LAST_PAGE.load(Ordering::Relaxed);
++    let err = LAST_ERROR.load(Ordering::Relaxed);
++    // 1455 = ERROR_COMMITMENT_LIMIT, the one a title near the commit limit runs into.
++    let why = if err == 1455 { " ERROR_COMMITMENT_LIMIT" } else { "" };
++    format!(" | lazy page commit failed {n} time(s), last {page:#x} err {err}{why}")
++}
++
++fn install() {
++    static ONCE: Once = Once::new();
++    ONCE.call_once(|| unsafe {
++        AddVectoredExceptionHandler(1, Some(handler));
++    });
+ }
+ 
+ unsafe extern "system" fn handler(info: *mut EXCEPTION_POINTERS) -> i32 {
+@@ -124,6 +157,30 @@ mod tests {
+         }
+     }
+ 
++    /// A commit the system cannot honour leaves the page lazy – the next access retries it –
++    /// and records the failure so a crash on that page reads as out of memory (#467). A freed
++    /// address stands in for a commit refused near the commit limit: `VirtualAlloc(MEM_COMMIT)`
++    /// fails on it the same way.
++    #[test]
++    fn a_failed_commit_keeps_the_page_lazy_and_says_so() {
++        unsafe {
++            let r = VirtualAlloc(std::ptr::null(), PAGE, MEM_RESERVE, PAGE_READWRITE) as usize;
++            assert_ne!(r, 0);
++            VirtualFree(r as *mut c_void, 0, MEM_RELEASE);
++            mark(r);
++            assert!(!commit(r), "a commit on a released address must fail");
++            assert!(LAZY.read().unwrap().contains(&r), "the page stays lazy for the next access");
++            assert!(FAILED.load(Ordering::Relaxed) >= 1, "the failure is counted");
++            let note = failure_note();
++            assert!(note.contains("lazy page commit failed"), "note = {note}");
++            assert!(note.contains("err"), "note names the Win32 error: {note}");
++            // `ensure` (kernel calls, DirectStorage destinations) must not swallow it either.
++            ensure(r, 4);
++            assert!(LAZY.read().unwrap().contains(&r), "still lazy after ensure");
++            unmark(r);
++        }
++    }
++
+     #[test]
+     fn threads_first_touching_one_lazy_page_together_all_go_on() {
+         const THREADS: usize = 8;

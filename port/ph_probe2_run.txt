@@ -1,0 +1,11 @@
+host build=19045 sp=0  (MEM_RESERVE_PLACEHOLDER=0x40000 MEM_REPLACE_PLACEHOLDER=0x4000)
+VirtualAlloc2 64K MEM_RESERVE only, RW                     -> 000001858a7a0000  lasterr=0
+VirtualAlloc2 64K MEM_RESERVE|PLACEHOLDER, RW              -> 0000000000000000  lasterr=87 (FAILED)
+VirtualAlloc2 64K MEM_RESERVE|PLACEHOLDER, NOACCESS        -> 000001858a7b0000  lasterr=87 (FAILED)
+VirtualAlloc2 1M MEM_RESERVE|PLACEHOLDER, NOACCESS         -> 000001858aab0000  lasterr=87 (FAILED)
+VirtualAlloc2 2M MEM_RESERVE|COMMIT, RW                    -> 000001858abb0000  lasterr=87 (FAILED)
+VirtualAlloc2 backing for section                          -> 000001858a7c0000  lasterr=0
+VirtualAlloc2 placeholder WITH section as replacement block -> 0000000000000000  lasterr=6 (FAILED)
+MapViewOfFile3 over that backing (MEM_REPLACE_PLACEHOLDER) -> 0000000000000000  lasterr=487 (FAILED)
+VirtualAlloc 64K MEM_RESERVE|MEM_COMMIT classic            -> 000001858a7d0000  lasterr=487 (FAILED)
+VirtualAlloc 2M MEM_RESERVE|MEM_COMMIT|MEM_LARGE_PAGES     -> 0000000000000000  lasterr=1314 (FAILED)

@@ -1,0 +1,6 @@
+kernelbase.dll handle = 00007ff95c7f0000
+  VirtualAlloc2            FOUND    lasterr=0
+  MapViewOfFile3           FOUND    lasterr=0
+  UnmapViewOfFile2         FOUND    lasterr=0
+  GetLocalNumaNodeInfo     missing  lasterr=127
+VirtualAlloc2(64K placeholder) = 0000000000000000  lasterr=87
