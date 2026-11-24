@@ -113,9 +113,27 @@ measured later with nothing else running: 125.9 GB commit available, 52.9 GB phy
 
 ## Two patches we wrote, built and tested here
 
-Diff: `port\xcl-mem-patches.diff` (8 564 B, three files). Build green, unit tests:
-`17 passed; 0 failed` — including the new one — and the two pre-existing lazy-page tests still
-pass, so the first-touch fault path is unchanged.
+**Status correction, 2026-11-24 (same day, later):** before publishing anything we searched
+the open PRs and found that **upstream already has both fixes** — the lazy-commit fix exists as
+#487, #488, #502 and #512 (#488 even has the job-object test we did not write), and the
+compile-thread default is #572, which the reporter of #542 has already run on their 32 GB
+machine. We therefore are not offering a fifth patch; we are **building and testing those four
+on a machine none of them covers** (Windows 10 19045.3324, `x86_64-pc-windows-gnu`, no MSVC,
+RTX 3080 20 GB, SM 6.5 only). The section below stays as the record of what we did and of one
+finding about the tests themselves.
+
+The test we added was also, as it turned out, **not parallel-safe**: after handing its
+reservation back to the OS, another test in the same module can re-reserve the very same
+address, so our `commit()` succeeds into someone else's page and both tests' assertions break —
+measured 4 failures in 5 runs at the default thread count, and 1 failure in 3 runs even with
+the two module filters combined. That is the same defect the maintainer raised against #487's
+test. We marked it `#[ignore = "commit failure needs a non-raced address; #502 injects the
+allocator instead"]`, which makes the module deterministic (`2 passed; 0 failed; 1 ignored` in
+4/4 runs) while `--ignored --exact` still runs it green on its own. The right shape is
+#502's injectable commit function.
+
+Diff: `port\xcl-mem-patches.diff` (8 564 B, three files). Build green (41 s incremental); with
+the test ignored the two touched modules report `16 passed; 0 failed` plus `1 ignored`.
 
 **1. `hle/kernelx/lazy.rs` + `eh.rs` — a failed lazy commit must not be silently lost (upstream #467, which duplicates #487/#488/#502).**
 `commit()` used to do `if !g.remove(&page) { return false }` and only then `VirtualAlloc(MEM_COMMIT…)`:
