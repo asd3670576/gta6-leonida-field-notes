@@ -24,15 +24,22 @@ param(
     [int]$DxcThreads = 0,          # 0 = XCL's default (cores-1, capped by free commit in our build)
     [int]$FrameDump = 0,           # N > 1: sample N frames
     [int]$SampleSec = 10,
+    [int]$PsoWaitMs = 0,           # >0 = XCL_PSO_WAIT_MS (only exists on upstream >= 09940bb, #891)
+    [string]$Game = 'H:\GTA6\GTA6.Xbox.v1.0.2.1-CYBERLEEK',
+    [string]$DataRoot = 'H:\leonida\xcl-data',
+    [string]$LogDir = 'H:\leonida\logs',
+    [string]$DxcDir = 'H:\leonida\dxc\bin\x64',
+    [string]$D3d12Dir = 'H:\leonida\agility\build\native\bin\x64',
     [string]$ExtraEnv = '',
     [string]$Tag = ''
 )
 $ErrorActionPreference = 'Continue'
 if (-not $Tag) { $Tag = (Get-Date).ToString('HHmmss') }
-$logs = 'H:\leonida\logs'
+$logs = $LogDir
 $xclExe = $Exe
-$dataRoot = 'H:\leonida\xcl-data'
-$game = 'H:\GTA6\GTA6.Xbox.v1.0.2.1-CYBERLEEK'
+$dataRoot = $DataRoot
+$game = $Game
+New-Item -ItemType Directory -Force -Path $logs | Out-Null
 $titleDir = Join-Path $dataRoot 'RockstarGamesInc.28872443D20A7'
 $log = Join-Path $logs ("xcl_long_{0}.log" -f $Tag)
 $samples = Join-Path $logs ("xcl_long_mem_{0}.csv" -f $Tag)
@@ -91,12 +98,15 @@ Write-Output ('xcl.toml: title_memory_mb=' + $TitleMemMb + ' uma_mb=' + $UmaMb +
 $bat = @(
     '@echo off'
     'setlocal'
-    'set XCL_DXC_DIR=H:\leonida\dxc\bin\x64'
-    'set XCL_D3D12_DIR=H:\leonida\agility\build\native\bin\x64'
+    ('set XCL_DXC_DIR=' + $DxcDir)
+)
+if (Test-Path $D3d12Dir) { $bat += ('set XCL_D3D12_DIR=' + $D3d12Dir) }
+$bat += @(
     "set XCL_DATA_ROOT=$dataRoot"
     'set XCL_NETWORK=0'
     'set XCL_ACTIVITY=1'
 )
+if ($PsoWaitMs -gt 0) { $bat += ('set XCL_PSO_WAIT_MS=' + $PsoWaitMs) }
 if ($CoherentMb -gt 0) { $bat += ('set XCL_COHERENT_MB=' + $CoherentMb) }
 if ($DxcThreads -gt 0) { $bat += ('set XCL_DXC_THREADS=' + $DxcThreads) }
 if ($FrameDump -gt 1) { $bat += ('set XCL_FRAME_DUMP=' + $FrameDump) }
