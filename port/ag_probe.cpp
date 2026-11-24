@@ -25,6 +25,12 @@ typedef HRESULT(WINAPI *CreateDeviceFn)(IUnknown *, D3D_FEATURE_LEVEL, REFIID, v
 #ifdef NO_AGILITY_EXPORTS
 unsigned long D3D12SDKVersion = 0;
 char D3D12SDKPath[] = "";
+#elif defined(USE_DEF_EXPORTS)
+// Exported through a .def fed to dlltool, so the ordinals are 1 and 2 as the D3D12 runtime
+// expects (GNU ld assigns PE ordinals alphabetically for __declspec(dllexport), which would
+// put D3D12SDKPath at ordinal 1).
+unsigned long D3D12SDKVersion = AGILITY_VERSION;
+char D3D12SDKPath[] = "D3D12\\";
 #else
 __declspec(dllexport) unsigned long D3D12SDKVersion = AGILITY_VERSION;
 __declspec(dllexport) char D3D12SDKPath[] = "D3D12\\";
@@ -63,8 +69,40 @@ static void list_d3d12_modules(void) {
     CloseHandle(snap);
 }
 
+// Print the host executable's own export directory: the D3D12 runtime reads these two exports
+// BY ORDINAL (version at 1, path at 2), and we need to know what ordinals our linker actually
+// assigned - dlltool's and ld's own reports were not conclusive here. The value at each
+// exported address is printed too: 0x26c (=620) means the version, a 0x7ff… pointer means the
+// string landed in the slot the loader wants the number in.
+static void self_exports(void) {
+    HMODULE me = GetModuleHandleA(NULL);
+    if (!me) return;
+    auto *dos = reinterpret_cast<IMAGE_DOS_HEADER *>(me);
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) { std::printf("  self exports: bad dos header\n"); return; }
+    auto *nt = reinterpret_cast<IMAGE_NT_HEADERS64 *>(reinterpret_cast<BYTE *>(me) + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE) { std::printf("  self exports: bad nt header\n"); return; }
+    auto &dir = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+    if (dir.VirtualAddress == 0) { std::printf("  self exports: none\n"); return; }
+    auto *e = reinterpret_cast<IMAGE_EXPORT_DIRECTORY *>(reinterpret_cast<BYTE *>(me) + dir.VirtualAddress);
+    auto *funcs = reinterpret_cast<DWORD *>(reinterpret_cast<BYTE *>(me) + e->AddressOfFunctions);
+    auto *ords = reinterpret_cast<WORD *>(reinterpret_cast<BYTE *>(me) + e->AddressOfNameOrdinals);
+    auto *names = reinterpret_cast<DWORD *>(reinterpret_cast<BYTE *>(me) + e->AddressOfNames);
+    std::printf("  self exports: base=%u named=%u total=%u\n", e->Base, e->NumberOfNames, e->NumberOfFunctions);
+    for (DWORD i = 0; i < e->NumberOfNames; ++i) {
+        const char *n = reinterpret_cast<const char *>(reinterpret_cast<BYTE *>(me) + names[i]);
+        if (!strstr(n, "D3D12")) continue;
+        WORD idx = ords[i];
+        void *at = reinterpret_cast<BYTE *>(me) + funcs[idx];
+        unsigned long long v = 0;
+        memcpy(&v, at, sizeof v);
+        std::printf("  self export: %-16s ordinal=%u  value=0x%llx\n", n,
+                    static_cast<unsigned>(e->Base) + idx, v);
+    }
+}
+
 int main(void) {
     std::printf("exports: D3D12SDKVersion=%lu D3D12SDKPath=\"%s\"\n", D3D12SDKVersion, D3D12SDKPath);
+    self_exports();
     HMODULE d3d = LoadLibraryExW(L"d3d12.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!d3d) {
         std::printf("  LoadLibrary(d3d12.dll) FAILED err=%lu\n", GetLastError());

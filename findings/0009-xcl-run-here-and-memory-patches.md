@@ -62,7 +62,8 @@ ID3D12SDKConfiguration1 unavailable (update Windows 10 to 22H2 KB5029331+): 不�
 (0x80004002)) (has 6.5): shaders cannot run
 ```
 
-Measured with `port\ag_probe.cpp` + `port\agility_matrix.ps1` rather than taken on faith:
+Measured with `port\ag_probe.cpp` + `port\agility_matrix.ps1` rather than taken on faith, and
+then re-measured once a confound of our own was removed:
 
 | case | result |
 |---|---|
@@ -71,13 +72,37 @@ Measured with `port\ag_probe.cpp` + `port\agility_matrix.ps1` rather than taken 
 | exports `610` + Agility 1.610.2 in `D3D12\` | **1114** as well |
 | exports present, `D3D12\` absent | **1114** |
 
-So the OS really does need `ID3D12SDKConfiguration1`, which Windows 10 22H2 gained in
-KB5029331 (build 19045.3393); we are on 19045.3324. We are **one cumulative update short** of
-the requirement, and the pre-KB5029331 mechanism (the classic exe exports) is not a workaround
-here — both Agility versions fail to initialise. Until that is closed, everything we measure
-with `xcl run` runs with the shader recompiler disabled: the crash above is *not* one of the
-crashes XCL's own reports describe, and the VRAM-side mechanisms (#345, #505-style pipeline
-accumulation) cannot be reproduced on this box.
+**Those rows were not yet a fair test of the classic mechanism, and we corrected them.**
+The probe now prints its own export directory, and that showed GNU ld assigning PE ordinals
+alphabetically for `__declspec(dllexport)`:
+
+```
+self export: D3D12SDKPath     ordinal=1  value=0x5c3231443344       <- the string "D3D12\"
+self export: D3D12SDKVersion  ordinal=2  value=0x314433440000026c   <- 0x26c = 620
+```
+
+The D3D12 runtime reads the version from **ordinal 1**, so it was reading the string's bytes as
+a version number. MinGW's `dlltool` would not emit both entries from a `.def` ("Syntax error in
+def file", exit 0, one export written), so `port\fix_exports.py` rewrites the export directory of
+the linked image: `AddressOfFunctions[0]` gets the version's RVA and the two name ordinals are
+swapped to match. With that verified in the same process (`D3D12SDKVersion ordinal=1`), the
+matrix was re-run:
+
+```
+Agility 1.620.2.0.20261106.5   version_ordinal=1  err 1114
+Agility 1.610.2.0.230420-…610  version_ordinal=1  err 1114
+Agility 1.608.2.0.221212-…608  version_ordinal=1  err 1114
+```
+
+Developer Mode is already on here (`HKLM\…\AppModelUnlock!AllowDevelopmentWithoutDevLicense = 1`),
+so that is not the missing piece either. Conclusion, stated as the strong claim it now is:
+**the OS really does need `ID3D12SDKConfiguration1` on this machine** — Windows 10 22H2 gained it
+in KB5029331 (19045.3393) and we are on 19045.3324, one cumulative update short. The pre-CU
+mechanism is not a workaround, at least not for the SM 6.6-capable Agility releases (≥ 1.600).
+
+Until that is closed, everything we measure with `xcl run` runs with the shader recompiler
+disabled: the crash above is *not* one of the crashes XCL's own reports describe, and the
+VRAM-side mechanisms (#345, #505-style pipeline accumulation) cannot be reproduced on this box.
 
 Memory attribution caveat, recorded deliberately: the first sampled run showed
 `vram_used 20091/20480 MiB` and `free physical 2937 MiB` 20 s in. Another GPU-heavy program
