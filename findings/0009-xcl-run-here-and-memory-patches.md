@@ -120,6 +120,29 @@ the cap bites, one log line says why. On this machine (125.9 GB commit free at s
 nothing: `min(31, 125) = 31` — the patch costs no throughput where memory is ample, which is the
 point #542's author made about `title_memory_mb` not helping.
 
+## The console's 16 GiB GPU pool, mapped onto a PC's VRAM
+
+The sizing is worth spelling out because it is where "显存溢出" comes from on a card smaller
+than an Xbox Series X:
+
+- `config.rs:111`: with `uma_mb = 0` — which is what XCL wrote into our `xcl.toml` — an
+  **`advanced` title-memory game gets `uma_mb = 4095`**, and `config.rs:27-28` says anything
+  above 4095 is split into 4 GiB windows (`gpu::uma`).
+- Our log line is the layout: `UMA: 3 sparse VRAM window(s) (12 GiB VA) + 512 MB coherent
+  window at 0x400000000`, i.e. **3 × 4 GiB of sparse VRAM windows plus one coherent window that
+  grows towards 4095 MB** (it climbed 1172 → 3371 → 3934 → 4530 MB across one run, and the
+  learned target is stored in `cache/uma_coherent.txt` for the next run). 12 + 4 = **16 GiB**,
+  the Series X's unified pool — with no relation to how much video memory the PC has.
+- So on our 20 GB card, XCL's own accounting (`coherent … , sparse 7431 MB`) plus the driver's
+  DXCache is enough to fill it, *with the shader recompiler switched off entirely*. The
+  `20091/20480 MiB` sample was taken while another GPU program was running and should not be
+  read as an exact XCL figure, but the 16 GiB sizing above is from the code and the run's own
+  lines, and it is the mechanism.
+- The lever exists but is undocumented for this case: `uma_mb` in the title's `xcl.toml`
+  (values above 4095 are split into windows; `0` means "ask for the device's standard budget").
+  Lowering it is the small-VRAM fix upstream's #345 reporter needed on their 6 GB card, and an
+  automatic cap at the adapter's dedicated memory would be the friendlier version of it.
+
 ## What we did not claim
 
 * We did not reproduce any of XCL's OOM reports; our run stops earlier, for a different reason
