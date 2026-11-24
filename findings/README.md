@@ -19,6 +19,8 @@ so they are kept here.
 | [`0010-xcl-approach-and-oom.md`](0010-xcl-approach-and-oom.md) | a reading of XCL's design and of the twelve separate memory-exhaustion mechanisms behind its "runs out of memory" reports, with what a 64 GB / 20 GB machine changes |
 | [`0011-the-boot-stop-is-gameinputcreate.md`](0011-the-boot-stop-is-gameinputcreate.md) | the guest's `call; test eax,eax; js -> int3` is on `GameInput.dll!ordinal 1` (`GameInputCreate`): the SDL3 GameInput shim was not built, so the host's GameInput.dll answered FAILED, and the null read is the unwritten out-parameter |
 | [`0012-xcl-memory-model.md`](0012-xcl-memory-model.md) | pool by pool, where XCL's memory actually goes: sparse pages cost host RAM *and* a VRAM tile each, `sparse 7431 MB` is address space not bytes, a learned `cache/uma_coherent.txt` overrides `uma_mb`, and `vram::Pages` pool heaps are never returned |
+| [`0013-sm65-target-feasibility.md`](0013-sm65-target-feasibility.md) | XCL's own HLSL compiled by standalone DXC: 483/483 at Shader Model 6.6, only 62/483 at 6.5 — `ResourceDescriptorHeap` (62.5 %) and `[WaveSize]` (51.6 %) are the hard reasons, and 483/483 pass at 6.5 once those two are rewritten |
+| [`0014-win10-port-what-the-runs-prove.md`](0014-win10-port-what-the-runs-prove.md) | three measured runs: the title presents 132 frames and every sampled pixel is dark (`non_dark_samples = 0`), memory is nowhere near the limit, `XCL_ALLOW_SM65` never fires because `preflight.rs` decides first, and the next wall is the SM 6.6 ABI root signature (`E_INVALIDARG`) — with the seven-step change list for a Win10 build |
 
 ## A note on the artifacts in `../port`
 
