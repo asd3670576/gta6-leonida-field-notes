@@ -37,6 +37,24 @@ repo manifest, then hashed again in place), the same command reports:
 08:38:00  check: all files present. Executable found.
 ```
 
+Exact strings, so the report can be checked without a game copy
+(`make_game.py`, `ff8ce388`; `fail()` prefixes them with `ERROR: `, `:112`):
+
+- `:326` `"No version probe files are listed in the manifest."`
+- `:334` `f"Missing {name}."` ← what our copy hit, three times
+- `:341` `f"{name} is not a regular file."`
+- `:343` `f"Wrong size for {name} ({info.st_size} bytes, expected {expected_size})."`
+- `:358` each candidate renders as `f"  {version['title']} {version['version']}\n    " + mismatches`
+- `:1062-1075` the `check()` body that *would* name every missing file
+  (`print(f"  missing  {rel}")`, `:1067`) and would print
+  `check: all files present. Executable found.` - unreachable here, because
+  `load_version()` already failed
+
+Where a fix would be tested: `tests/test_make_game_preflight.py:136-143` and
+`:151-171` already assert the per-version probe mismatch lines, and
+`tests/test_make_game_container.py:129-139` covers the container notes - a
+synthetic folder with half a manifest present fits the same pattern.
+
 Suggest: when no version matches but at least half the manifest entries match by
 name and size, print `N of M manifest files present with matching sizes` plus
 the missing names, and say the copy looks **incomplete** rather than

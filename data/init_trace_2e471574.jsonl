@@ -1,0 +1,15 @@
+{"seq":1,"t":0.000011,"kind":"trace_open","pid":44996}
+{"seq":2,"t":1.108791,"kind":"map","module":"XboxBvhBuilder.dll","base":"0x180000000","size":"0xde000","relocated":false}
+{"seq":3,"t":1.110526,"kind":"map","module":"amd_fidelityfx_loader_xbox.dll","base":"0x2ab29630000","size":"0x8000","relocated":true}
+{"seq":4,"t":1.182525,"kind":"map","module":"libHttpClient.GDK.dll","base":"0x2ab29640000","size":"0xf4000","relocated":true}
+{"seq":5,"t":1.190267,"kind":"map","module":"Bink2Scarlett.dll","base":"0x2ab29760000","size":"0x44000","relocated":true}
+{"seq":6,"t":1.199191,"kind":"map","module":"game_scarlett_master.exe","base":"0x140000000","size":"0xb06d000","relocated":false}
+{"seq":7,"t":1.205251,"kind":"dllmain","module":"XboxBvhBuilder.dll","result":1}
+{"seq":8,"t":1.205270,"kind":"dllmain","module":"amd_fidelityfx_loader_xbox.dll","result":1}
+{"seq":9,"t":1.205281,"kind":"dllmain","module":"libHttpClient.GDK.dll","result":1}
+{"seq":10,"t":1.205288,"kind":"dllmain","module":"Bink2Scarlett.dll","result":1}
+{"seq":11,"t":1.205296,"kind":"tls_callback","module":"game_scarlett_master.exe","at":"game_scarlett_master.exe+0x55dd4f4","reason":1}
+{"seq":12,"t":1.205301,"kind":"tls_callback","module":"game_scarlett_master.exe","at":"game_scarlett_master.exe+0x55e2ebc","reason":1}
+{"seq":13,"t":1.205564,"kind":"exit","code":0}
+{"seq":14,"t":1.205578,"kind":"tls_callback","module":"game_scarlett_master.exe","at":"game_scarlett_master.exe+0x55dd4f4","reason":0}
+{"seq":15,"t":1.205588,"kind":"tls_callback","module":"game_scarlett_master.exe","at":"game_scarlett_master.exe+0x55e2ebc","reason":0}

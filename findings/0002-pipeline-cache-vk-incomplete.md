@@ -23,15 +23,31 @@ run so far; the cache file itself kept growing, so the failure is intermittent
 and scales with cache size and thread count.
 
 Why it matters: the periodic save exists precisely so that a 3-10 hour corpus run
-can be interrupted without losing the cache. On the biggest caches - which are
-the machines that need those runs - it is the one save most likely to fail.
+can be interrupted without losing the cache - `docs/pipeline_check.md:33`
+promises "saved every 10 minutes and at the end, so a stopped run resumes". On
+this run that is roughly 45 periodic saves, of which one was lost, and the loss
+is the size- and thread-dependent kind: `--jobs 16` (the default is half the
+hardware threads, `vk_pipeline_check.cpp:799`) on a 32-thread CPU with a cache
+near 3 GB. The tool's own unit test models exactly this and says so -
+`runtime/test/pipeline_cache_snapshot_test.cpp:53-72`, "Reading into exactly the
+queried size returned VK_INCOMPLETE here on every attempt", with the doubling
+growth case expected to reach "the four-attempt error". Our run is that case on
+real hardware, at a size the unit test cannot reach.
 
 Status upstream: this is already fixed on current main. `8d34751d`
 (PR #9722) changes the loop to read into `size + size >> (4 - attempt)`, i.e.
-1/16 slack on the first attempt, doubling to 1/2 on the fourth. Both successor
-CI artifacts we downloaded (`2e471574` and `ff8ce388`) contain that fix, and
-`4eb6155d` does not. Reported here so the empirical case for #9722 is not lost
-with the deleted tracker: it was not only a theoretical race, it fired on real
-hardware at 16 jobs.
+1/16 slack on the first attempt, doubling to 1/2 on the fourth
+(`pipeline_cache_snapshot.h:23` at HEAD). Both successor CI artifacts we
+downloaded (`2e471574` and `ff8ce388`) contain that fix, and `4eb6155d` does
+not. Reported here so the empirical case for #9722 is not lost with the deleted
+tracker: it was not only a theoretical race, it fired on real hardware at
+16 jobs and a multi-gigabyte cache.
+
+Not documented anywhere: `docs/pipeline_check.md` and the tool's usage header
+(`vk_pipeline_check.cpp:1-47`) never mention `VK_INCOMPLETE` or the retry
+expectation - it lives only in code comments and the unit test. A line in the
+docs ("a periodic save can fail on a large cache; the run continues and the
+final save is the one that matters") would stop people reading one such line as
+a corrupted run.
 
 Needs: nothing further - second verification only, no game data attached.

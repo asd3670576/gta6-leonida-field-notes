@@ -64,6 +64,32 @@ from before the multi-module static-TLS work hits this and may conclude the
 package or the executable is broken. Worth a line in the artifact README, or a
 version stamp in the error.
 
+### Why the older artifact fails, in code
+
+`4eb6155d` is 2,273 commits behind `ff8ce388`, and every fix that this dry run
+depends on postdates it (verified with `git merge-base --is-ancestor`):
+
+- the executable-TLS series - `b7a3fed2` (give a `/GA` executable its own TLS at
+  index 0), `a2542ccd`, `66a7dbc1`, `b2902830`, `4710549a`, `e0816d6a` - is all
+  after it, which is exactly what the "only one manually mapped module may use
+  static TLS at a time" refusal is about; `docs/retail_boot_chain.md` records the
+  same shape as its stop 4
+- `git show 4eb6155d:runtime/src/main.cpp` accepts only
+  `--dry-run / --init / --run / --trace-d3d12 / --game-dir / --overlay`: no
+  `--trace`, no `--mods`, no `--archetype-lookup`, no `--view-mode-getter`
+- `git show 4eb6155d:runtime/shims/d3d12_vulkan_device.cpp` contains **no
+  pipeline-cache code at all** - the cache seeding arrived with `a02d5486`
+  (PR #4559), which is not an ancestor of `4eb6155d`. So an artifact of that age
+  silently ignores a multi-gigabyte `pipeline_cache.bin` even if it is placed
+  correctly
+- `runtime/shims/` at that commit has no `acphal.cpp`, `xapu_chad.cpp` or
+  `xg_xs.cpp`, which is why the unimplemented count differs so much between the
+  two runs above
+
+Practical rule: **use the newest `runtime-windows` artifact, and check its
+`head_sha`** before concluding anything from a failure. The artifact's own commit
+is one API call away (`/actions/runs/<id>` → `head_sha`).
+
 Suggest: update the RT-5 table from a package that ships the executable (the
 1.0.2.1 copy we hold does, `game_scarlett_master.exe`,
 SHA-256 `e95020b2fa4a721db3df59fdecf75621730ac559d8835252f6c3b658d5a08993`,
@@ -76,3 +102,30 @@ unimplemented import stops the run only if the title calls it.
 Needs: no game data attached; the numbers above are the tool's own report.
 Measured on `2e471574`; a re-measure at `ff8ce388` is queued, which additionally
 carries `f35d19cb` (the retail exe imports `SetThreadGroupAffinity`).
+
+## `--init` on the same images: reproduced, clean
+
+```
+gta6rt.exe --init "<package>\game_scarlett_master.exe" --game-dir <package> --overlay <scratch> --trace <file>
+exit=0, "5 module(s) initialised"
+```
+
+The `--trace` file is exactly 15 records, matching what
+`docs/runtime_imports.md:182-185` describes on Windows 11 - here on Windows 10
+19045, with the executable that came in the package:
+
+| seq | kind | detail |
+|---:|---|---|
+| 2-6 | `map` | `XboxBvhBuilder.dll` at its preferred base, the three other package DLLs relocated, `game_scarlett_master.exe` at `0x140000000` (`0xb06d000`) |
+| 7-10 | `dllmain` | all four package DLLs, `result: 1` |
+| 11-12 | `tls_callback` | `game_scarlett_master.exe+0x55dd4f4` and `+0x55e2ebc`, `reason: 1` (attach) |
+| 13 | `exit` | `code: 0` |
+| 14-15 | `tls_callback` | same two callbacks, `reason: 0` (detach) |
+
+No `exception`, no `error`, no `unimplemented_call` - so on this machine too,
+none of the 11 unimplemented imports is touched by the TLS callbacks or the
+`DllMain`s. The raw trace is kept in
+[`../data/init_trace_2e471574.jsonl`](../data/init_trace_2e471574.jsonl).
+
+What is still unmeasured by anybody: `--run`. The doc says so itself
+(`:187-190`), and it is the only step left after the four above.

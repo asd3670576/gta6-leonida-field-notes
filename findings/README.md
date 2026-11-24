@@ -11,3 +11,5 @@ so they are kept here.
 | [`0002-pipeline-cache-vk-incomplete.md`](0002-pipeline-cache-vk-incomplete.md) | the periodic pipeline-cache save fails with `VK_INCOMPLETE` on NVIDIA driver 610.88 |
 | [`0003-wmi-adapter-ram.md`](0003-wmi-adapter-ram.md) | `Win32_VideoController.AdapterRAM` caps at 4 GiB, so a 20 GB card reads as 4 GB |
 | [`0004-retail-dry-run-11-unimplemented.md`](0004-retail-dry-run-11-unimplemented.md) | a `--dry-run` over the executable that **is** in our package maps all five modules with 11 unimplemented imports (audio + DirectStorage only), and an artifact one day older refuses to map anything |
+| [`0005-isolate-docs-drift.md`](0005-isolate-docs-drift.md) | `docs/pipeline_check.md` still calls crash isolation POSIX-only although the same PR gave it a Windows child-process path |
+| [`0006-prologue-fps-claims-vs-tree.md`](0006-prologue-fps-claims-vs-tree.md) | the circulating "0.2-2 FPS in the prologue, measured with diagnostics + DRED" report cannot come from this tree, and two of its four "unsupported shader" names are wrong |

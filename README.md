@@ -6,7 +6,11 @@ Windows 10 machine with our own copy of the 1.0.2.1 package.
 
 **No game data here.** Only file names, byte counts and SHA-256 values that
 already appear in the project's own `game/xbox-1.0.2.1.json`, plus numbers from
-our own logs.
+our own logs. The project's own gate agrees:
+
+```
+python -I scripts/check_no_game_data.py <every file in this repository>   -> exit 0
+```
 
 > Provenance note: these measurements were originally reported against
 > `ItsNotRexed/Leonida`, which returned **404 on 2026-11-24** (its issue tracker
@@ -116,25 +120,40 @@ administrator rights. Artifacts age: `4eb6155d` cannot map the package at all,
 `2e471574` maps it with 11 unimplemented imports, and `ff8ce388` additionally
 carries `f35d19cb` (the retail executable imports `SetThreadGroupAffinity`).
 
-Sequence we are running, in this order:
+Sequence we are running, in this order (all three modes come from
+`runtime/src/main.cpp:79-107`: exactly one of `--dry-run` / `--init` / `--run`):
 
 1. `--dry-run` over `game_scarlett_master.exe` — done, see
    [`findings/0004`](findings/0004-retail-dry-run-11-unimplemented.md).
-2. `--init` with `--trace` — expected to exit 0; the doc's run showed the four
-   package DLLs' `DllMain` and the executable's two TLS callbacks all running
-   cleanly.
-3. `--run` with the full 26,503-module SPIR-V corpus and the **warm** pipeline
-   cache built by `vk_pipeline_check` over the whole corpus. The cache matters:
-   a cold cache compiles thousands of pipelines on first entry to the prologue,
-   which is what makes that stretch stutter even where it runs.
+2. `--init --trace <file>` — done, exits 0 with the documented 15 trace records.
+3. `--run` with `LEONIDA_D3D12=vulkan`, `LEONIDA_SHADERS=<work>/shaders/spirv`
+   and the **warm** pipeline cache over the whole corpus.
 
-Known ceiling from other reports: with diagnostics + DRED enabled the prologue
-reaches roughly 0.2-2 FPS, and world shaders that use features the translator
-rejects (`v_swap_b32`, 64-bit image atomics, untracked lane masks, unknown
-stride buffers) have their draw or dispatch dropped rather than mis-rendered.
-Our own corpus numbers for the neighbouring risk - wave64 graphics tier C,
-8,245 of 26,503 modules approximate on 32-wide subgroups - are in
-[`data/results_summary.json`](data/results_summary.json).
+Two things about step 3 that the README of the project does not say and the code
+does (`runtime/shims/d3d12_vulkan_device.cpp:129-135`):
+
+- the cache is not a flag — the runtime loads **`pipeline_cache.bin` from the
+  folder that holds `gta6rt.exe`**, exact name, cwd-independent, and the runtime
+  never writes it back. So the file `vk_pipeline_check` produces has to be
+  copied next to the exe under that name, and its header must match the device
+  (`vendorID` / `deviceID` / `pipelineCacheUUID`, `:168-176`): a cache built on
+  one GPU is rejected by another with
+  `[rt] d3d12: pipeline_cache.bin does not match this Vulkan device`.
+- `vk_pipeline_check` only builds *graphics* pipelines when partner stubs exist
+  in `<spirv dir>/stubs/` (`runtime/test/vk_pipeline_check.cpp:8-9, 1724-1769`),
+  otherwise those modules are recorded as `missing stub` and the graphics PSOs
+  still compile cold. Ours has `stubs/` (43 files) and the corpus run reported
+  0 skipped, so the cache covers graphics as well as compute.
+
+Expectation for step 3, from the repo itself rather than from third-party
+reports: `README.md:49-54` says the game does not boot, and
+`docs/retail_boot_chain.md:101-104` — the furthest documented attempt, on
+Windows 11 + RTX 4090 with six unmerged PRs merged locally — states "Nothing has
+reached a draw or a present yet". A plain `main` artifact is therefore expected
+to stop at one of those documented stops, and the value of running it is naming
+the stop on this hardware. The "0.2-2 FPS in the prologue" number circulating
+elsewhere cannot come from this tree: see
+[`findings/0006`](findings/0006-prologue-fps-claims-vs-tree.md).
 
 ## License
 
